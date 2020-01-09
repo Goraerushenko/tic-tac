@@ -1,9 +1,10 @@
 import 'package:audioplayers/audio_cache.dart';
 import 'package:flutter/material.dart';
-import 'package:tic_tac/components/board.dart';
-import 'package:tic_tac/components/customLine.dart';
-import 'package:tic_tac/components/o.dart';
-import 'package:tic_tac/components/x.dart';
+import 'package:tic_tac/widgets/board.dart';
+import 'package:tic_tac/widgets/customLine.dart';
+import 'package:tic_tac/widgets/o.dart';
+import 'package:tic_tac/widgets/x.dart';
+
 
 class Game extends StatefulWidget {
   Game({
@@ -149,7 +150,7 @@ class _GameState extends State<Game> with TickerProviderStateMixin{
                       )
                     ],
                   ),
-                  Board(
+                  BoardWidget(
                     clearIsStarted: (){
                       pressed = false;
                     },

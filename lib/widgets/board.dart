@@ -1,12 +1,13 @@
 import 'package:audioplayers/audio_cache.dart';
 import 'package:flutter/material.dart';
-import 'package:tic_tac/components/customLine.dart';
-import 'package:tic_tac/components/o.dart';
-import 'package:tic_tac/components/x.dart';
+import 'package:tic_tac/models/board-model.dart';
 import 'dart:math';
 
-class Board extends StatefulWidget {
-  Board({
+import 'package:tic_tac/widgets/o.dart';
+import 'package:tic_tac/widgets/x.dart';
+
+class BoardWidget extends StatefulWidget {
+  BoardWidget({
     Key key,
     this.reverse,
     this.currPlayer,
@@ -25,32 +26,25 @@ class Board extends StatefulWidget {
   final Function(int, int) winCallback;
 
   @override
-  _BoardState createState() => _BoardState();
+  _BoardWidgetState createState() => _BoardWidgetState();
 }
 
-class _BoardState extends State<Board> with TickerProviderStateMixin{
-  int xWins = 0;
-  int oWins = 0;
-  AnimationController controller;
-  List<List<AnimationController>> animationsController = [];
-  List<Animation<dynamic>> animations = [];
-  List<List<Animation<dynamic>>> animatedIcon = [];
-  List<Offset> coords = [];
-  List<List<GlobalKey>> keys = [
+class _BoardWidgetState extends State<BoardWidget> with TickerProviderStateMixin{
+  int _xWins = 0;
+  int _oWins = 0;
+  AnimationController _controller;
+  List<List<AnimationController>> _animationsController = [];
+  List<Animation<dynamic>> _animations = [];
+  List<List<Animation<dynamic>>> _animatedIcon = [];
+  List<Offset> _coords = [];
+  List<List<GlobalKey>> _keys = [
     [GlobalKey(), GlobalKey(), GlobalKey()],
     [GlobalKey(), GlobalKey(), GlobalKey()],
     [GlobalKey(), GlobalKey(), GlobalKey()],
   ];
   List<List<int>> coordAround = [[0,1],[1,-1],[-1,-1],[0,-1],[1,0],[-1,0],[1,1],[-1,1]];
-  var arrayOfBorder = [
-    ['', '' ,''],
-    ['', '' ,''],
-    ['', '' ,''],
-  ];
+  Board _board = Board();
   List<dynamic> list = [];
-  GlobalKey firstKey = GlobalKey();
-  GlobalKey secondKey = GlobalKey();
-  List<GlobalKey> listOfKeys = [GlobalKey(),GlobalKey(),GlobalKey()];
   AudioCache player = AudioCache();
   String currentPlayer = 'x';
   final borderLine = BorderSide(color: Colors.grey);
@@ -60,46 +54,33 @@ class _BoardState extends State<Board> with TickerProviderStateMixin{
     currentPlayer = widget.currPlayer;
     for(int i = 0;i < 3;i++){
       for(int j = 0;j < 3;j++){
-        animationsController[i][j].status == AnimationStatus.completed ? animationsController[i][j].reverse() : null;
+        _animationsController[i][j].status == AnimationStatus.completed ? _animationsController[i][j].reverse() : null;
       }
     }
     Future.delayed(const Duration(milliseconds: 400), () {
       setState(() {
-        arrayOfBorder = [
-          ['', '' ,''],
-          ['', '' ,''],
-          ['', '' ,''],
-        ];
+        _board = Board();
       });
     });
   }
-  bool draw(){
-    bool have = true;
-    arrayOfBorder.forEach((el){
-      el.forEach((e){
-        if(e == ''){
-          have = false;
-        }
-      });
-    });
-    return have;
-  }
+  bool draw() => _board.isDraw;
+
   String whoWinner(){
     String winner = '';
-    for(int i = 0; i < arrayOfBorder.length; i++){
-      for(int j = 0; j < arrayOfBorder[i].length; j++){
+    for(int i = 0; i < _board.length; i++){
+      for(int j = 0; j < _board[i].length; j++){
         for(int el = 0; el < coordAround.length; el++){
           if(i + coordAround[el][0]*2 >= 0 && j + coordAround[el][1]*2 >= 0 && j + coordAround[el][1]*2 < 3 && i + coordAround[el][0]*2 < 3){
             if(arrayOfBorder[i][j] == arrayOfBorder[i + coordAround[el][0]][j + coordAround[el][1]] &&
                 arrayOfBorder[i][j] == arrayOfBorder[i + coordAround[el][0]*2][j + coordAround[el][1]*2]){
               if(arrayOfBorder[i][j] != '' && winner == ''){
                 winner = arrayOfBorder[i][j];
-                RenderBox boxF = keys[i][j].currentContext.findRenderObject();
-                RenderBox boxS = keys[i + coordAround[el][0]*2][j + coordAround[el][1]*2].currentContext.findRenderObject();
+                RenderBox boxF = _keys[i][j].currentContext.findRenderObject();
+                RenderBox boxS = _keys[i + coordAround[el][0]*2][j + coordAround[el][1]*2].currentContext.findRenderObject();
                 widget.drawALine(
                     Offset(boxF.localToGlobal(Offset.zero).dx + 2, boxF.localToGlobal(Offset.zero).dy + 3),
                     Offset(boxS.localToGlobal(Offset.zero).dx + 2, boxS.localToGlobal(Offset.zero).dy + 3));
-                print(coords);
+                print(_coords);
               }
             }
           }
@@ -109,12 +90,12 @@ class _BoardState extends State<Board> with TickerProviderStateMixin{
     return winner;
   }
   void onTap(int x, int y){
-    controller.forward();
-    RenderBox f = keys[x][y].currentContext.findRenderObject();
+    _controller.forward();
+    RenderBox f = _keys[x][y].currentContext.findRenderObject();
     list.add(f.localToGlobal(Offset.zero));
     print(list);
     if(arrayOfBorder[y][x] == ''){
-      animationsController[y][x].forward();
+      _animationsController[y][x].forward();
       if(widget.withBot != null){
         currentPlayer == 'x' ? player.play('x.mp3') :  player.play('o.mp3');
         setState(() => arrayOfBorder[y][x] = currentPlayer);
@@ -122,7 +103,7 @@ class _BoardState extends State<Board> with TickerProviderStateMixin{
           List<int> randomNum = [Random().nextInt(3),Random().nextInt(3)];
           if(arrayOfBorder[randomNum[0]][randomNum[1]] == ''){
             setState(() => arrayOfBorder[randomNum[0]][randomNum[1]] = widget.currPlayer == 'x' ? 'o' : 'x');
-            animationsController[randomNum[0]][randomNum[1]].forward();
+            _animationsController[randomNum[0]][randomNum[1]].forward();
             break;
           }
         }
@@ -136,10 +117,10 @@ class _BoardState extends State<Board> with TickerProviderStateMixin{
 
   }
     if(whoWinner() != ''){
-      whoWinner() == 'x' ? xWins++ : oWins++;
-      widget.winCallback(xWins, oWins);
+      whoWinner() == 'x' ? _xWins++ : _oWins++;
+      widget.winCallback(_xWins, _oWins);
     } else if(draw()){
-      widget.winCallback(xWins, oWins);
+      widget.winCallback(_xWins, _oWins);
       widget.currPlayer == 'o' && widget.withBot != null ? arrayOfBorder[Random().nextInt(3)][Random().nextInt(3)] = 'x' : null;
     }
   }
@@ -157,14 +138,14 @@ class _BoardState extends State<Board> with TickerProviderStateMixin{
         children: <Widget>[
           Center(
             child: Container(
-              key: keys[y][x],
+              key: _keys[y][x],
               height: 10,
               width: 10,
               color: Colors.transparent,
             ),
           ),
           arrayOfBorder[y][x] == '' ? SizedBox() : Opacity(
-            opacity: animatedIcon[y][x].value,
+            opacity: _animatedIcon[y][x].value,
             child: Center(
               child: arrayOfBorder[y][x] == 'x' ? XIcon(size: 50,) : OIcon(size: 50,),
             ),
@@ -176,20 +157,20 @@ class _BoardState extends State<Board> with TickerProviderStateMixin{
 
   @override
   void initState() {
-    controller = AnimationController(vsync: this,duration: Duration(milliseconds: 400));
+    _controller = AnimationController(vsync: this,duration: Duration(milliseconds: 400));
     for(int i = 0;i < 3;i++){
-      animationsController.add([]);
-      animatedIcon.add([]);
+      _animationsController.add([]);
+      _animatedIcon.add([]);
       for(int j = 0;j < 3;j++){
-        animationsController[i].add(AnimationController(vsync: this,duration: Duration(milliseconds: 400)));
-        animatedIcon[i].add(Tween(begin: 0.0, end: 1.0).animate(animationsController[i][j])..addListener((){setState(() {});}));
+        _animationsController[i].add(AnimationController(vsync: this,duration: Duration(milliseconds: 400)));
+        _animatedIcon[i].add(Tween(begin: 0.0, end: 1.0).animate(_animationsController[i][j])..addListener((){setState(() {});}));
       }
     }
     currentPlayer = widget.currPlayer;
     if(widget.currPlayer == 'o' && widget.withBot != null){
       List<int> random = [Random().nextInt(3),Random().nextInt(3)];
       arrayOfBorder[random[0]][random[1]] = 'x';
-      animationsController[random[0]][random[1]].forward();
+      _animationsController[random[0]][random[1]].forward();
     }
     super.initState();
   }
@@ -201,7 +182,7 @@ class _BoardState extends State<Board> with TickerProviderStateMixin{
         if(widget.currPlayer == 'o' && widget.withBot != null){
           List<int> random = [Random().nextInt(3),Random().nextInt(3)];
           arrayOfBorder[random[0]][random[1]] = 'x';
-          animationsController[random[0]][random[1]].forward();
+          _animationsController[random[0]][random[1]].forward();
         }
       });
     }

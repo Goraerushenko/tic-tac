@@ -1,10 +1,10 @@
 import 'package:audioplayers/audio_cache.dart';
 import 'package:flutter/material.dart';
-import 'package:tic_tac/components/btn.dart';
-import 'package:tic_tac/components/logo.dart';
 import 'package:tic_tac/pages/game.dart';
 import 'package:tic_tac/theme/theme.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:tic_tac/widgets/btn.dart';
+import 'package:tic_tac/widgets/logo.dart';
 import 'picker.dart';
 
 class StartScreen extends StatefulWidget {
